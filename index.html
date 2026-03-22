@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SondageApp</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --ink:#0f0f0f;
+  --paper:#f6f3ee;
+  --white:#ffffff;
+  --accent:#d94f1e;
+  --accent-soft:rgba(217,79,30,.1);
+  --green:#1e8a4c;
+  --green-soft:rgba(30,138,76,.1);
+  --muted:#888077;
+  --border:#e0dbd2;
+  --sidebar:#0f0f0f;
+}
+
+body{font-family:'DM Sans',sans-serif;background:var(--paper);color:var(--ink);min-height:100vh;overflow-x:hidden}
+
+/* ─── NOISE ─── */
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.035'/%3E%3C/svg%3E");
+}
+
+/* ─── VIEWS ─── */
+.view{display:none;min-height:100vh}
+.view.on{display:flex}
+
+/* ══════════════════════════════════
+   LOGIN
+══════════════════════════════════ */
+#vLogin{align-items:stretch}
+
+.login-left{
+  flex:1;background:var(--sidebar);
+  display:flex;flex-direction:column;justify-content:space-between;
+  padding:3rem;position:relative;overflow:hidden;
+}
+.login-left::before{
+  content:'';position:absolute;top:-120px;right:-120px;
+  width:400px;height:400px;border-radius:50%;
+  background:radial-gradient(circle,rgba(217,79,30,.18) 0%,transparent 70%);
+  pointer-events:none;
+}
+.login-left::after{
+  content:'';position:absolute;bottom:-80px;left:-80px;
+  width:300px;height:300px;border-radius:50%;
+  background:radial-gradient(circle,rgba(217,79,30,.1) 0%,transparent 70%);
+  pointer-events:none;
+}
+
+.login-brand{
+  font-family:'Syne',sans-serif;font-weight:800;font-size:1.6rem;
+  letter-spacing:-.04em;color:#fff;text-decoration:none;position:relative;z-index:1;
+}
+.login-brand em{font-style:normal;color:var(--accent)}
+
+.login-tagline{
+  position:relative;z-index:1;
+}
+.login-tagline h1{
+  font-family:'Syne',sans-serif;font-weight:800;
+  font-size:clamp(2rem,3.5vw,3rem);line-height:1.1;
+  letter-spacing:-.04em;color:#fff;margin-bottom:1rem;
+}
+.login-tagline h1 span{color:var(--accent)}
+.login-tagline p{color:rgba(255,255,255,.45);font-size:.95rem;line-height:1.7;max-width:320px}
+
+.login-dots{
+  position:absolute;bottom:3rem;left:3rem;
+  display:flex;gap:.5rem;z-index:1;
+}
+.login-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.2)}
+.login-dot.on{background:var(--accent);width:24px;border-radius:4px}
+
+/* RIGHT PANEL */
+.login-right{
+  width:480px;background:var(--white);
+  display:flex;align-items:center;justify-content:center;
+  padding:3rem;
+}
+.login-form{width:100%}
+.login-form h2{
+  font-family:'Syne',sans-serif;font-weight:800;font-size:1.75rem;
+  letter-spacing:-.03em;margin-bottom:.4rem;
+}
+.login-form .sub{font-size:.9rem;color:var(--muted);margin-bottom:2rem}
+
+.role-tabs{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:1.8rem}
+.role-tab{
+  border:2px solid var(--border);border-radius:10px;
+  padding:1rem;cursor:pointer;text-align:center;
+  background:none;font-family:'DM Sans',sans-serif;
+  transition:all .18s;
+}
+.role-tab:hover{border-color:var(--accent)}
+.role-tab.sel{border-color:var(--accent);background:var(--accent-soft)}
+.role-tab .ri{font-size:1.4rem;display:block;margin-bottom:.35rem}
+.role-tab .rn{font-weight:600;font-size:.88rem;color:var(--ink)}
+.role-tab .rd{font-size:.75rem;color:var(--muted);margin-top:.15rem}
+
+.fg{margin-bottom:.9rem}
+.fg label{display:block;font-size:.82rem;font-weight:500;margin-bottom:.35rem}
+.fg input{
+  width:100%;padding:.75rem 1rem;
+  border:1.5px solid var(--border);border-radius:8px;
+  font-family:'DM Sans',sans-serif;font-size:.95rem;
+  background:var(--paper);color:var(--ink);outline:none;
+  transition:border-color .18s;
+}
+.fg input:focus{border-color:var(--accent)}
+
+.btn-login{
+  width:100%;margin-top:1.2rem;padding:.85rem;
+  background:var(--accent);color:#fff;
+  border:none;border-radius:8px;cursor:pointer;
+  font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:500;
+  transition:opacity .18s;
+}
+.btn-login:hover{opacity:.87}
+
+.err{
+  font-size:.82rem;color:#c0392b;
+  background:rgba(192,57,43,.08);
+  border:1px solid rgba(192,57,43,.2);
+  border-radius:6px;padding:.6rem .9rem;
+  margin-top:.8rem;display:none;
+}
+.err.on{display:block}
+
+/* ══════════════════════════════════
+   ADMIN
+══════════════════════════════════ */
+#vAdmin{flex-direction:row}
+
+.adm-sidebar{
+  width:220px;background:var(--sidebar);color:#fff;
+  position:fixed;top:0;left:0;bottom:0;
+  display:flex;flex-direction:column;padding:1.6rem 1rem;
+  z-index:50;
+}
+.adm-logo{
+  font-family:'Syne',sans-serif;font-weight:800;font-size:1.2rem;
+  letter-spacing:-.04em;margin-bottom:.2rem;
+}
+.adm-logo em{font-style:normal;color:var(--accent)}
+.adm-role{font-size:.68rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
+  color:rgba(255,255,255,.3);margin-bottom:1.8rem}
+
+.adm-nav-lbl{font-size:.65rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
+  color:rgba(255,255,255,.25);margin:1rem 0 .4rem .6rem}
+
+.adm-nav-item{
+  display:flex;align-items:center;gap:.65rem;
+  padding:.6rem .8rem;border-radius:7px;cursor:pointer;
+  font-size:.875rem;color:rgba(255,255,255,.6);
+  transition:all .18s;border:none;background:none;
+  width:100%;text-align:left;font-family:'DM Sans',sans-serif;
+  margin-bottom:.1rem;
+}
+.adm-nav-item:hover{background:rgba(255,255,255,.07);color:#fff}
+.adm-nav-item.on{background:rgba(217,79,30,.2);color:#fff}
+.adm-nav-item .ni{width:17px;text-align:center;font-size:.95rem}
+
+.adm-footer{margin-top:auto;padding-top:1rem;border-top:1px solid rgba(255,255,255,.07)}
+.adm-user{font-size:.78rem;color:rgba(255,255,255,.4);margin-bottom:.7rem}
+.adm-user strong{display:block;color:rgba(255,255,255,.75);font-weight:500;margin-bottom:.1rem}
+
+/* MAIN */
+.adm-main{margin-left:220px;flex:1;display:flex;flex-direction:column;min-height:100vh}
+
+.adm-topbar{
+  position:sticky;top:0;z-index:40;
+  background:rgba(246,243,238,.93);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  padding:.95rem 2rem;
+  display:flex;justify-content:space-between;align-items:center;
+}
+.adm-topbar-title{font-family:'Syne',sans-serif;font-weight:700;font-size:1rem}
+
+.adm-content{padding:1.8rem 2rem;flex:1}
+
+/* PAGES */
+.adm-page{display:none}
+.adm-page.on{display:block}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:.9rem;margin-bottom:1.8rem}
+.stat{background:var(--white);border:1.5px solid var(--border);border-radius:11px;padding:1.2rem}
+.stat-lbl{font-size:.75rem;color:var(--muted);font-weight:500;margin-bottom:.45rem}
+.stat-val{font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;line-height:1}
+.stat-note{font-size:.75rem;color:var(--green);margin-top:.35rem}
+
+/* TABLE CARD */
+.tcard{background:var(--white);border:1.5px solid var(--border);border-radius:11px;overflow:hidden}
+.tcard-head{
+  padding:1rem 1.4rem;border-bottom:1px solid var(--border);
+  display:flex;justify-content:space-between;align-items:center;
+}
+.tcard-head h3{font-family:'Syne',sans-serif;font-weight:700;font-size:.95rem}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;padding:.65rem 1.4rem;font-size:.73rem;font-weight:600;
+  color:var(--muted);text-transform:uppercase;letter-spacing:.07em;
+  border-bottom:1px solid var(--border);background:rgba(246,243,238,.6)}
+td{padding:.9rem 1.4rem;font-size:.875rem;border-bottom:1px solid rgba(224,219,210,.4)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(246,243,238,.6)}
+
+.badge{display:inline-block;font-size:.68rem;font-weight:600;
+  padding:.22rem .6rem;border-radius:100px}
+.badge-active{background:rgba(30,138,76,.12);color:var(--green)}
+.badge-draft{background:rgba(136,128,119,.12);color:var(--muted)}
+.badge-closed{background:rgba(192,57,43,.1);color:#c0392b}
+
+.act-btns{display:flex;gap:.4rem}
+.btn-ico{
+  background:none;border:1.5px solid var(--border);border-radius:6px;
+  width:30px;height:30px;cursor:pointer;display:flex;align-items:center;
+  justify-content:center;font-size:.82rem;transition:all .18s;
+}
+.btn-ico:hover{border-color:var(--accent)}
+.btn-ico.del:hover{border-color:#c0392b}
+
+/* FORM */
+.fsec{background:var(--white);border:1.5px solid var(--border);border-radius:11px;padding:1.5rem;margin-bottom:1.2rem}
+.fsec h3{font-family:'Syne',sans-serif;font-weight:700;margin-bottom:1.3rem}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:.9rem}
+.fgroup{margin-bottom:.9rem}
+.fgroup label{display:block;font-size:.82rem;font-weight:500;margin-bottom:.35rem}
+.fgroup input,.fgroup select,.fgroup textarea{
+  width:100%;padding:.65rem .9rem;
+  border:1.5px solid var(--border);border-radius:7px;
+  font-family:'DM Sans',sans-serif;font-size:.875rem;
+  background:var(--paper);color:var(--ink);outline:none;
+  transition:border-color .18s;
+}
+.fgroup input:focus,.fgroup select:focus,.fgroup textarea:focus{border-color:var(--accent)}
+.fgroup textarea{min-height:64px;resize:vertical}
+
+/* QUESTIONS */
+.q-list{display:flex;flex-direction:column;gap:.7rem;margin-bottom:.9rem}
+.q-item{
+  background:var(--paper);border:1.5px solid var(--border);
+  border-radius:9px;padding:.9rem;
+}
+.q-top{display:flex;gap:.7rem;align-items:flex-start}
+.q-num{
+  font-family:'Syne',sans-serif;font-weight:700;
+  color:var(--accent);width:22px;flex-shrink:0;margin-top:.25rem;font-size:.95rem;
+}
+.q-top input{
+  flex:1;padding:.55rem .8rem;
+  border:1.5px solid var(--border);border-radius:7px;
+  font-family:'DM Sans',sans-serif;font-size:.875rem;
+  background:var(--white);outline:none;transition:border-color .18s;
+}
+.q-top input:focus{border-color:var(--accent)}
+.opts-grid{display:grid;grid-template-columns:1fr 1fr;gap:.45rem;padding-left:1.9rem;margin-top:.55rem}
+.opt-inp{
+  padding:.42rem .7rem;border:1.5px solid var(--border);
+  border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.82rem;
+  background:var(--white);outline:none;transition:border-color .18s;width:100%;
+}
+.opt-inp:focus{border-color:var(--accent)}
+.btn-add-opt{
+  margin-left:1.9rem;margin-top:.4rem;
+  background:none;border:1.5px dashed var(--border);border-radius:5px;
+  padding:.3rem .65rem;font-size:.78rem;color:var(--muted);cursor:pointer;
+  font-family:'DM Sans',sans-serif;transition:all .18s;
+}
+.btn-add-opt:hover{border-color:var(--accent);color:var(--accent)}
+
+/* RESULTS BARS */
+.rcard{background:var(--white);border:1.5px solid var(--border);border-radius:11px;padding:1.4rem;margin-bottom:.9rem}
+.rq-title{font-family:'Syne',sans-serif;font-weight:700;margin-bottom:1.1rem}
+.rbar-row{margin-bottom:.65rem}
+.rbar-lbl{display:flex;justify-content:space-between;font-size:.83rem;margin-bottom:.3rem}
+.rbar-lbl .pct{font-weight:600;color:var(--accent)}
+.rbar{height:8px;background:var(--border);border-radius:100px;overflow:hidden}
+.rbar-fill{height:100%;background:var(--accent);border-radius:100px;transition:width .8s ease}
+.rbar-fill.g{background:var(--green)}
+.rbar-fill.o{background:#d4860a}
+.rbar-fill.b{background:#2563eb}
+
+/* BUTTONS */
+.btn{
+  font-family:'DM Sans',sans-serif;font-size:.855rem;font-weight:500;
+  padding:.52rem 1.1rem;border-radius:7px;cursor:pointer;transition:all .18s;border:none;
+}
+.btn-p{background:var(--accent);color:#fff}
+.btn-p:hover{opacity:.87}
+.btn-g{background:none;border:1.5px solid var(--border);color:var(--ink)}
+.btn-g:hover{border-color:var(--ink)}
+.btn-danger{background:#c0392b;color:#fff}
+
+/* AZURE CHIPS */
+.az-strip{display:flex;gap:.7rem;flex-wrap:wrap;margin-bottom:1.5rem}
+.az-chip{
+  display:flex;align-items:center;gap:.45rem;
+  padding:.38rem .85rem;background:var(--white);
+  border:1.5px solid var(--border);border-radius:100px;font-size:.78rem;font-weight:500;
+}
+.az-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+/* ══════════════════════════════════
+   USER VIEW
+══════════════════════════════════ */
+#vUser{flex-direction:column}
+
+.usr-nav{
+  position:sticky;top:0;z-index:40;
+  background:rgba(246,243,238,.93);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  padding:1rem 2rem;display:flex;justify-content:space-between;align-items:center;
+}
+.usr-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:1.2rem;letter-spacing:-.04em}
+.usr-logo em{font-style:normal;color:var(--accent)}
+.usr-info{display:flex;align-items:center;gap:.8rem}
+.usr-email{font-size:.82rem;color:var(--muted)}
+.btn-sm-out{
+  font-size:.78rem;font-weight:500;padding:.35rem .8rem;
+  border-radius:6px;cursor:pointer;border:1.5px solid var(--border);
+  background:none;color:var(--ink);font-family:'DM Sans',sans-serif;transition:all .18s;
+}
+.btn-sm-out:hover{border-color:var(--ink)}
+
+.usr-container{max-width:720px;margin:0 auto;padding:2.5rem 1.5rem;width:100%}
+
+/* LIST */
+.usr-section-lbl{font-size:.72rem;font-weight:600;letter-spacing:.15em;
+  text-transform:uppercase;color:var(--muted);margin-bottom:.6rem}
+.usr-section-title{
+  font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;
+  letter-spacing:-.03em;margin-bottom:1.8rem;
+}
+
+.scard{
+  background:var(--white);border:1.5px solid var(--border);border-radius:13px;
+  padding:1.4rem;display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:.8rem;transition:all .2s;cursor:pointer;
+}
+.scard:hover{border-color:var(--accent);transform:translateY(-2px);
+  box-shadow:0 8px 24px rgba(217,79,30,.07)}
+.scard.done{opacity:.5;cursor:default}
+.scard.done:hover{transform:none;border-color:var(--border);box-shadow:none}
+.scard-info h3{font-family:'Syne',sans-serif;font-weight:700;font-size:.97rem;margin-bottom:.25rem}
+.scard-info p{font-size:.82rem;color:var(--muted)}
+.scard-meta{display:flex;gap:.9rem;margin-top:.5rem}
+.meta-chip{font-size:.73rem;color:var(--muted)}
+.btn-go{
+  flex-shrink:0;margin-left:1.2rem;
+  padding:.55rem 1.2rem;border-radius:7px;cursor:pointer;
+  background:var(--accent);color:#fff;border:none;
+  font-family:'DM Sans',sans-serif;font-size:.855rem;font-weight:500;
+  transition:opacity .18s;
+}
+.btn-go:hover{opacity:.85}
+.btn-go.done-btn{background:var(--border);color:var(--muted);cursor:default}
+.btn-go.done-btn:hover{opacity:1}
+
+.empty-state{text-align:center;padding:4rem 2rem;color:var(--muted)}
+.empty-state .es-icon{font-size:2.5rem;margin-bottom:.8rem}
+.empty-state p{font-size:.9rem}
+
+/* SURVEY TAKING */
+.sv-wrap{display:none}
+.sv-header-card{
+  background:var(--white);border:1.5px solid var(--border);
+  border-radius:13px;padding:1.4rem;margin-bottom:1.2rem;
+}
+.sv-header-card h2{font-family:'Syne',sans-serif;font-weight:800;font-size:1.35rem;margin-bottom:.3rem}
+.sv-header-card p{font-size:.85rem;color:var(--muted)}
+.prog-wrap{margin-top:.9rem}
+.prog-meta{display:flex;justify-content:space-between;font-size:.78rem;color:var(--muted);margin-bottom:.35rem}
+.prog-bar{height:5px;background:var(--border);border-radius:100px;overflow:hidden}
+.prog-fill{height:100%;background:var(--accent);border-radius:100px;transition:width .35s ease}
+
+.qcard{
+  background:var(--white);border:1.5px solid var(--border);
+  border-radius:13px;padding:1.6rem;margin-bottom:.9rem;display:none;
+}
+.qcard.on{display:block;animation:slideIn .25s ease}
+@keyframes slideIn{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:none}}
+.qnum{font-size:.72rem;font-weight:600;color:var(--accent);text-transform:uppercase;
+  letter-spacing:.1em;margin-bottom:.6rem}
+.qtext{font-family:'Syne',sans-serif;font-weight:700;font-size:1.05rem;
+  line-height:1.4;margin-bottom:1.2rem}
+.opts-list{display:flex;flex-direction:column;gap:.5rem}
+.opt-btn{
+  border:1.5px solid var(--border);border-radius:9px;
+  padding:.8rem 1rem;cursor:pointer;
+  font-family:'DM Sans',sans-serif;font-size:.9rem;
+  background:var(--paper);color:var(--ink);text-align:left;
+  display:flex;align-items:center;gap:.8rem;transition:all .18s;
+}
+.opt-btn:hover{border-color:var(--accent);background:var(--accent-soft)}
+.opt-btn.sel{border-color:var(--accent);background:var(--accent-soft);font-weight:500}
+.opt-letter{
+  width:26px;height:26px;border-radius:50%;
+  background:var(--border);color:var(--muted);
+  font-size:.75rem;font-weight:700;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;transition:all .18s;
+}
+.opt-btn.sel .opt-letter{background:var(--accent);color:#fff}
+
+.sv-nav-btns{display:flex;justify-content:space-between;align-items:center;margin-top:1.2rem}
+.btn-prev-nav{
+  padding:.65rem 1.3rem;border-radius:7px;cursor:pointer;
+  background:none;border:1.5px solid var(--border);color:var(--ink);
+  font-family:'DM Sans',sans-serif;font-size:.875rem;font-weight:500;transition:all .18s;
+}
+.btn-prev-nav:hover{border-color:var(--ink)}
+.btn-next-nav{
+  padding:.65rem 1.4rem;border-radius:7px;cursor:pointer;
+  background:var(--accent);border:none;color:#fff;
+  font-family:'DM Sans',sans-serif;font-size:.875rem;font-weight:500;transition:opacity .18s;
+}
+.btn-next-nav.submit{background:var(--green)}
+.btn-next-nav:hover{opacity:.85}
+
+/* RESULTS */
+.res-wrap{display:none}
+.success-banner{
+  background:var(--green-soft);border:1.5px solid rgba(30,138,76,.25);
+  border-radius:11px;padding:1.4rem;text-align:center;margin-bottom:1.4rem;
+}
+.success-banner .si{font-size:2rem;margin-bottom:.4rem}
+.success-banner h3{font-family:'Syne',sans-serif;font-weight:700;color:var(--green);margin-bottom:.25rem}
+.success-banner p{font-size:.85rem;color:var(--muted)}
+
+/* NOTIF TOAST */
+.toast{
+  position:fixed;bottom:1.5rem;right:1.5rem;z-index:9998;
+  background:var(--ink);color:#fff;
+  padding:.8rem 1.3rem;border-radius:9px;font-size:.875rem;font-weight:500;
+  transform:translateY(70px);opacity:0;transition:all .28s;max-width:320px;
+}
+.toast.on{transform:translateY(0);opacity:1}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  .login-left{display:none}
+  .login-right{width:100%}
+  .adm-sidebar{width:60px;padding:1rem .5rem}
+  .adm-sidebar .adm-logo,.adm-sidebar .adm-role,.adm-nav-lbl,.adm-nav-item span,.adm-footer .adm-user{display:none}
+  .adm-main{margin-left:60px}
+  .stats-row{grid-template-columns:1fr 1fr}
+}
+@media(max-width:600px){
+  .stats-row{grid-template-columns:1fr}
+  .frow{grid-template-columns:1fr}
+  .usr-nav{padding:1rem}
+  .usr-container{padding:1.5rem 1rem}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════ LOGIN ══════════════ -->
+<div class="view" id="vLogin">
+  <div class="login-left">
+    <div class="login-brand">Sondage<em>App</em></div>
+    <div class="login-tagline">
+      <h1>Créez &amp; répondez<br>aux sondages<br><span>en temps réel.</span></h1>
+      <p>Application déployée sur Azure — scalable, sécurisée, avec résultats instantanés.</p>
+    </div>
+    <div class="login-dots">
+      <div class="login-dot on"></div>
+      <div class="login-dot"></div>
+      <div class="login-dot"></div>
+    </div>
+  </div>
+
+  <div class="login-right">
+    <div class="login-form">
+      <h2>Connexion</h2>
+      <p class="sub">Choisissez votre rôle pour continuer</p>
+
+      <div class="role-tabs">
+        <button class="role-tab" id="rtUser" onclick="setRole('user')">
+          <span class="ri">👤</span>
+          <span class="rn">Utilisateur</span>
+          <p class="rd">Répondre aux sondages</p>
+        </button>
+        <button class="role-tab" id="rtAdmin" onclick="setRole('admin')">
+          <span class="ri">⚙️</span>
+          <span class="rn">Administrateur</span>
+          <p class="rd">Gérer les sondages</p>
+        </button>
+      </div>
+
+      <div class="fg">
+        <label>Email</label>
+        <input type="email" id="lEmail" placeholder="vous@exemple.com" onkeydown="if(event.key==='Enter')doLogin()"/>
+      </div>
+      <div class="fg">
+        <label>Mot de passe</label>
+        <input type="password" id="lPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/>
+      </div>
+      <div class="err" id="lErr">Email ou mot de passe incorrect.</div>
+      <button class="btn-login" onclick="doLogin()">Se connecter →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ ADMIN ══════════════ -->
+<div class="view" id="vAdmin">
+
+  <!-- Sidebar -->
+  <aside class="adm-sidebar">
+    <div>
+      <div class="adm-logo">Sondage<em>App</em></div>
+      <div class="adm-role">Admin Panel</div>
+    </div>
+    <span class="adm-nav-lbl">Principal</span>
+    <button class="adm-nav-item on" id="nav-dash" onclick="admPage('dash',this)"><span class="ni">📊</span><span>Dashboard</span></button>
+    <button class="adm-nav-item" id="nav-create" onclick="admPage('create',this)"><span class="ni">➕</span><span>Créer sondage</span></button>
+    <button class="adm-nav-item" id="nav-list" onclick="admPage('list',this)"><span class="ni">📋</span><span>Mes sondages</span></button>
+    <span class="adm-nav-lbl">Analyse</span>
+    <button class="adm-nav-item" id="nav-results" onclick="admPage('results',this)"><span class="ni">📈</span><span>Résultats</span></button>
+    <button class="adm-nav-item" id="nav-parts" onclick="admPage('parts',this)"><span class="ni">👥</span><span>Participants</span></button>
+    <span class="adm-nav-lbl">Azure</span>
+    <button class="adm-nav-item" id="nav-azure" onclick="admPage('azure',this)"><span class="ni">☁️</span><span>Azure Monitor</span></button>
+
+    <div class="adm-footer">
+      <div class="adm-user"><strong id="admEmail">—</strong>Administrateur</div>
+      <button class="adm-nav-item" onclick="logout()"><span class="ni">🚪</span><span>Déconnexion</span></button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="adm-main">
+    <div class="adm-topbar">
+      <div class="adm-topbar-title" id="admPageTitle">Dashboard</div>
+      <div style="display:flex;gap:.7rem">
+        <button class="btn btn-g" onclick="admPage('create',document.getElementById('nav-create'))">+ Nouveau</button>
+        <button class="btn btn-p" onclick="toast('☁️ Synchronisation Azure…');setTimeout(()=>toast('✅ Synchronisé !'),1800)">↻ Azure</button>
+      </div>
+    </div>
+
+    <div class="adm-content">
+
+      <!-- DASHBOARD -->
+      <div class="adm-page on" id="ap-dash">
+        <div class="az-strip">
+          <div class="az-chip"><div class="az-dot"></div>App Service — OK</div>
+          <div class="az-chip"><div class="az-dot"></div>Azure Functions — Actif</div>
+          <div class="az-chip"><div class="az-dot"></div>SQL Database — Connecté</div>
+          <div class="az-chip"><div class="az-dot"></div>Load Balancer — 2 instances</div>
+        </div>
+        <div class="stats-row">
+          <div class="stat"><div class="stat-lbl">Sondages actifs</div><div class="stat-val" id="stActive">0</div><div class="stat-note">↑ En direct</div></div>
+          <div class="stat"><div class="stat-lbl">Total réponses</div><div class="stat-val" id="stResp">0</div><div class="stat-note">↑ Temps réel</div></div>
+          <div class="stat"><div class="stat-lbl">Participants</div><div class="stat-val" id="stParts">0</div><div class="stat-note">↑ Uniques</div></div>
+          <div class="stat"><div class="stat-lbl">Complétion</div><div class="stat-val">87%</div><div class="stat-note">↑ Bonne perf.</div></div>
+        </div>
+        <div class="tcard">
+          <div class="tcard-head"><h3>Sondages récents</h3><button class="btn btn-g" style="font-size:.78rem;padding:.38rem .8rem" onclick="admPage('list',document.getElementById('nav-list'))">Voir tout →</button></div>
+          <table><thead><tr><th>Titre</th><th>Questions</th><th>Réponses</th><th>Statut</th><th>Actions</th></tr></thead>
+          <tbody id="dashTbl"></tbody></table>
+        </div>
+      </div>
+
+      <!-- CREATE -->
+      <div class="adm-page" id="ap-create">
+        <div class="fsec">
+          <h3>Informations</h3>
+          <div class="frow">
+            <div class="fgroup"><label>Titre *</label><input type="text" id="fTitle" placeholder="Ex: Satisfaction étudiants 2024"/></div>
+            <div class="fgroup"><label>Statut</label>
+              <select id="fStatus"><option value="draft">Brouillon</option><option value="active">Actif (visible aux utilisateurs)</option></select>
+            </div>
+          </div>
+          <div class="fgroup"><label>Description</label><textarea id="fDesc" placeholder="Description optionnelle…"></textarea></div>
+        </div>
+        <div class="fsec">
+          <h3>Questions</h3>
+          <div class="q-list" id="qList"></div>
+          <button class="btn btn-g" onclick="addQ()">+ Ajouter une question</button>
+        </div>
+        <div style="display:flex;gap:.8rem;margin-top:.5rem">
+          <button class="btn btn-g" onclick="resetCreate()">Annuler</button>
+          <button class="btn btn-p" onclick="saveSurvey()">💾 Enregistrer</button>
+        </div>
+      </div>
+
+      <!-- LIST -->
+      <div class="adm-page" id="ap-list">
+        <div class="tcard">
+          <div class="tcard-head"><h3>Tous les sondages</h3>
+            <button class="btn btn-p" style="font-size:.8rem" onclick="admPage('create',document.getElementById('nav-create'))">+ Nouveau</button>
+          </div>
+          <table><thead><tr><th>Titre</th><th>Questions</th><th>Réponses</th><th>Statut</th><th>Créé le</th><th>Actions</th></tr></thead>
+          <tbody id="listTbl"></tbody></table>
+        </div>
+      </div>
+
+      <!-- RESULTS -->
+      <div class="adm-page" id="ap-results">
+        <div style="display:flex;gap:.8rem;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap">
+          <select class="fgroup" style="margin:0;padding:.55rem .9rem;border:1.5px solid var(--border);border-radius:7px;font-family:'DM Sans',sans-serif;font-size:.875rem;background:var(--white);outline:none;min-width:220px" id="resSel" onchange="renderResults()">
+            <option value="">— Choisir un sondage —</option>
+          </select>
+          <button class="btn btn-g" onclick="exportCSV()">⬇ CSV</button>
+        </div>
+        <div id="resContainer"><p style="color:var(--muted);font-size:.9rem">Sélectionnez un sondage pour afficher les résultats.</p></div>
+      </div>
+
+      <!-- PARTICIPANTS -->
+      <div class="adm-page" id="ap-parts">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.4rem">
+          <input style="padding:.6rem 1rem;border:1.5px solid var(--border);border-radius:7px;font-family:'DM Sans',sans-serif;font-size:.875rem;width:260px;background:var(--white);outline:none" placeholder="🔍 Rechercher…" oninput="filterParts(this.value)"/>
+          <button class="btn btn-g" onclick="exportCSV()">⬇ Export</button>
+        </div>
+        <div class="tcard">
+          <table><thead><tr><th>Email</th><th>Sondage</th><th>Date</th><th>Statut</th></tr></thead>
+          <tbody id="partsTbl"></tbody></table>
+        </div>
+      </div>
+
+      <!-- AZURE -->
+      <div class="adm-page" id="ap-azure">
+        <div class="stats-row">
+          <div class="stat"><div class="stat-lbl">CPU Usage</div><div class="stat-val" id="azCPU">12%</div><div class="stat-note">App Service</div></div>
+          <div class="stat"><div class="stat-lbl">Instances</div><div class="stat-val" id="azInst">2</div><div class="stat-note">Autoscaling ON</div></div>
+          <div class="stat"><div class="stat-lbl">Req / min</div><div class="stat-val" id="azReq">34</div><div class="stat-note">Load Balancer</div></div>
+          <div class="stat"><div class="stat-lbl">Func calls</div><div class="stat-val" id="azFunc">0</div><div class="stat-note">Azure Functions</div></div>
+        </div>
+        <div class="fsec">
+          <h3>Configuration Autoscaling</h3>
+          <div class="frow">
+            <div class="fgroup"><label>Min instances</label><input type="number" value="1" min="1" max="10" id="scMin"/></div>
+            <div class="fgroup"><label>Max instances</label><input type="number" value="5" min="1" max="20" id="scMax"/></div>
+          </div>
+          <div class="frow">
+            <div class="fgroup"><label>Seuil CPU scale-out (%)</label><input type="number" value="70" id="scCPU"/></div>
+            <div class="fgroup"><label>Métrique</label><select><option>CPU</option><option>Requêtes HTTP</option><option>Mémoire</option></select></div>
+          </div>
+          <button class="btn btn-p" onclick="toast('⚖️ Autoscaling configuré : '+document.getElementById('scMin').value+'–'+document.getElementById('scMax').value+' instances')">Appliquer</button>
+        </div>
+        <div class="fsec">
+          <h3>Connexion Azure SQL &amp; Functions</h3>
+          <div class="frow">
+            <div class="fgroup"><label>Serveur SQL</label><input type="text" id="sqlSrv" placeholder="monserveur.database.windows.net"/></div>
+            <div class="fgroup"><label>Base de données</label><input type="text" id="sqlDB" placeholder="sondagedb"/></div>
+          </div>
+          <div class="frow">
+            <div class="fgroup"><label>Utilisateur</label><input type="text" placeholder="sqladmin"/></div>
+            <div class="fgroup"><label>Mot de passe</label><input type="password" placeholder="••••••••"/></div>
+          </div>
+          <div class="fgroup"><label>URL Azure Function</label><input type="text" id="funcURL" placeholder="https://monfunc.azurewebsites.net/api/calculateResults"/></div>
+          <button class="btn btn-p" onclick="testConn()">🔗 Tester la connexion</button>
+        </div>
+      </div>
+
+    </div><!-- /adm-content -->
+  </div><!-- /adm-main -->
+</div><!-- /vAdmin -->
+
+<!-- ══════════════ USER ══════════════ -->
+<div class="view" id="vUser">
+  <nav class="usr-nav">
+    <div class="usr-logo">Sondage<em>App</em></div>
+    <div class="usr-info">
+      <span class="usr-email" id="usrEmail">—</span>
+      <button class="btn-sm-out" onclick="logout()">Déconnexion</button>
+    </div>
+  </nav>
+
+  <div class="usr-container">
+
+    <!-- LIST -->
+    <div id="usrList">
+      <p class="usr-section-lbl">Disponibles pour vous</p>
+      <h2 class="usr-section-title">Sondages en cours</h2>
+      <div id="scardList"></div>
+    </div>
+
+    <!-- SURVEY TAKING -->
+    <div class="sv-wrap" id="svWrap">
+      <div class="sv-header-card">
+        <h2 id="svTitle">—</h2>
+        <p id="svDesc"></p>
+        <div class="prog-wrap">
+          <div class="prog-meta"><span id="progTxt">Q 1 / 1</span><span id="progPct">0%</span></div>
+          <div class="prog-bar"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+        </div>
+      </div>
+      <div id="qcardsWrap"></div>
+      <div class="sv-nav-btns">
+        <button class="btn-prev-nav" id="btnPrev" onclick="prevQ()">← Précédent</button>
+        <button class="btn-next-nav" id="btnNext" onclick="nextQ()">Suivant →</button>
+      </div>
+    </div>
+
+    <!-- RESULTS -->
+    <div class="res-wrap" id="resWrap">
+      <div class="success-banner">
+        <div class="si">✅</div>
+        <h3>Réponse enregistrée !</h3>
+        <p>Voici les résultats en temps réel après votre soumission.</p>
+      </div>
+      <div id="usrResContainer"></div>
+      <div style="text-align:center;margin-top:1.5rem">
+        <button class="btn btn-p" onclick="backToList()">← Retour aux sondages</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toastEl"></div>
+
+<!-- ══════════════════════════════════
+     SHARED STATE + LOGIC
+══════════════════════════════════ -->
+<script>
+// ─── SHARED STATE (single source of truth) ───────────────────────────
+const DB = {
+  get surveys(){ return JSON.parse(localStorage.getItem('sp_surveys')||'[]') },
+  set surveys(v){ localStorage.setItem('sp_surveys', JSON.stringify(v)) },
+  get responses(){ return JSON.parse(localStorage.getItem('sp_responses')||'[]') },
+  set responses(v){ localStorage.setItem('sp_responses', JSON.stringify(v)) },
+};
+
+// App state (in-memory only)
+let app = {
+  role: null,
+  email: null,
+  currentSurvey: null,
+  currentQ: 0,
+  answers: [],
+  qCount: 0,
+};
+
+// ─── SEED DATA (first load only) ─────────────────────────────────────
+if (!localStorage.getItem('sp_seeded')) {
+  DB.surveys = [
+    { id: 1001, title: 'Satisfaction Étudiants 2024', desc: 'Enquête annuelle de satisfaction', status: 'active', created: '2024-01-15',
+      questions: [
+        { text: 'Comment évaluez-vous votre formation ?', options: ['Excellent','Très bien','Bien','Insuffisant'] },
+        { text: 'Recommanderiez-vous cette formation ?', options: ['Oui, certainement','Probablement','Peu probable','Non'] },
+      ]},
+    { id: 1002, title: 'Quiz Azure Cloud', desc: 'Testez vos connaissances Azure', status: 'active', created: '2024-02-01',
+      questions: [
+        { text: 'Quel service Azure héberge les Web Apps ?', options: ['App Service','Virtual Machines','AKS','Azure Functions'] },
+        { text: 'Azure Functions est de type :', options: ['IaaS','PaaS','SaaS','FaaS'] },
+        { text: 'Le Load Balancer Azure opère à quel niveau ?', options: ['Couche 4 (Transport)','Couche 7 (Application)','Couche 3 (Réseau)','Couche 2 (Liaison)'] },
+      ]},
+    { id: 1003, title: 'Préférences Technologiques', desc: '', status: 'draft', created: '2024-02-10',
+      questions: [
+        { text: 'Quel framework frontend préférez-vous ?', options: ['React','Vue.js','Angular','Vanilla JS'] },
+      ]},
+  ];
+  DB.responses = [
+    { email:'ali@example.com', surveyId:1001, date:'2024-01-20', answers:[0,0] },
+    { email:'fatima@example.com', surveyId:1001, date:'2024-01-21', answers:[0,1] },
+    { email:'youssef@example.com', surveyId:1002, date:'2024-02-05', answers:[0,3,0] },
+    { email:'sara@example.com', surveyId:1001, date:'2024-01-22', answers:[1,2] },
+    { email:'karim@example.com', surveyId:1002, date:'2024-02-06', answers:[0,3,0] },
+  ];
+  localStorage.setItem('sp_seeded','1');
+}
+
+// ─── LOGIN ────────────────────────────────────────────────────────────
+let selectedRole = 'user';
+
+function setRole(r) {
+  selectedRole = r;
+  document.getElementById('rtUser').classList.toggle('sel', r==='user');
+  document.getElementById('rtAdmin').classList.toggle('sel', r==='admin');
+}
+
+// Default: select user role on load
+setRole('user');
+
+function doLogin() {
+  const email = document.getElementById('lEmail').value.trim();
+  const pass  = document.getElementById('lPass').value;
+  const err   = document.getElementById('lErr');
+
+  if (!email || !pass) { err.classList.add('on'); err.textContent='Veuillez remplir tous les champs.'; return; }
+  if (pass.length < 4) { err.classList.add('on'); err.textContent='Mot de passe trop court (min 4 car.).'; return; }
+  err.classList.remove('on');
+
+  app.role  = selectedRole;
+  app.email = email;
+
+  show('vLogin', false);
+  if (selectedRole === 'admin') {
+    show('vAdmin', true);
+    document.getElementById('admEmail').textContent = email;
+    refreshAdmin();
+    setInterval(()=>{
+      document.getElementById('azCPU').textContent  = (8+Math.random()*20).toFixed(1)+'%';
+      document.getElementById('azReq').textContent  = Math.floor(15+Math.random()*40);
+      document.getElementById('azFunc').textContent = DB.responses.length * 2;
+    }, 4000);
+  } else {
+    show('vUser', true);
+    document.getElementById('usrEmail').textContent = email;
+    renderUserList();
+  }
+}
+
+function logout() {
+  app = { role:null, email:null, currentSurvey:null, currentQ:0, answers:[], qCount:0 };
+  show('vAdmin', false);
+  show('vUser', false);
+  show('vLogin', true);
+  document.getElementById('lEmail').value='';
+  document.getElementById('lPass').value='';
+}
+
+function show(id, on) {
+  const el = document.getElementById(id);
+  el.classList.toggle('on', on);
+  el.style.display = on ? 'flex' : 'none';
+}
+
+// init
+show('vLogin', true);
+show('vAdmin', false);
+show('vUser', false);
+
+// ─── ADMIN ────────────────────────────────────────────────────────────
+function admPage(id, btn) {
+  document.querySelectorAll('.adm-page').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.adm-nav-item').forEach(n=>n.classList.remove('on'));
+  document.getElementById('ap-'+id).classList.add('on');
+  if (btn) btn.classList.add('on');
+  const titles={dash:'Dashboard',create:'Créer un sondage',list:'Mes sondages',results:'Résultats',parts:'Participants',azure:'Azure Monitor'};
+  document.getElementById('admPageTitle').textContent = titles[id]||id;
+  if (id==='create' && !document.getElementById('qList').children.length) addQ();
+  if (id==='results') populateResSel();
+  if (id==='list') renderListTbl();
+  if (id==='parts') renderParts();
+  if (id==='dash') refreshAdmin();
+}
+
+function refreshAdmin() {
+  const surveys = DB.surveys;
+  const responses = DB.responses;
+  const active = surveys.filter(s=>s.status==='active').length;
+  document.getElementById('stActive').textContent = active;
+  document.getElementById('stResp').textContent   = responses.length;
+  document.getElementById('stParts').textContent  = [...new Set(responses.map(r=>r.email))].length;
+  renderDashTbl();
+  renderListTbl();
+  renderParts();
+  populateResSel();
+}
+
+function renderDashTbl() {
+  const tbody = document.getElementById('dashTbl');
+  const surveys = DB.surveys;
+  const responses = DB.responses;
+  if (!surveys.length) { tbody.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:2rem">Aucun sondage. <a href="#" onclick="admPage(\'create\',document.getElementById(\'nav-create\'))">Créer le premier →</a></td></tr>'; return; }
+  tbody.innerHTML = surveys.slice(0,6).map(s=>{
+    const reps = responses.filter(r=>r.surveyId===s.id).length;
+    return `<tr>
+      <td><strong>${s.title}</strong><br><small style="color:var(--muted)">${s.desc||'—'}</small></td>
+      <td>${s.questions.length}</td>
+      <td><strong>${reps}</strong></td>
+      <td><span class="badge badge-${s.status}">${s.status==='active'?'Actif':s.status==='draft'?'Brouillon':'Fermé'}</span></td>
+      <td><div class="act-btns">
+        <button class="btn-ico" title="Résultats" onclick="openResults(${s.id})">📈</button>
+        <button class="btn-ico" title="Activer/Désactiver" onclick="toggleSt(${s.id})">${s.status==='active'?'⏸':'▶'}</button>
+        <button class="btn-ico del" title="Supprimer" onclick="delSurvey(${s.id})">🗑️</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderListTbl() {
+  const tbody = document.getElementById('listTbl');
+  const surveys = DB.surveys;
+  const responses = DB.responses;
+  if (!surveys.length) { tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem">Aucun sondage créé.</td></tr>'; return; }
+  tbody.innerHTML = surveys.map(s=>{
+    const reps = responses.filter(r=>r.surveyId===s.id).length;
+    return `<tr>
+      <td><strong>${s.title}</strong></td>
+      <td>${s.questions.length}</td>
+      <td>${reps}</td>
+      <td><span class="badge badge-${s.status}">${s.status==='active'?'Actif':s.status==='draft'?'Brouillon':'Fermé'}</span></td>
+      <td>${s.created}</td>
+      <td><div class="act-btns">
+        <button class="btn-ico" onclick="openResults(${s.id})">📈</button>
+        <button class="btn-ico" onclick="toggleSt(${s.id})">${s.status==='active'?'⏸':'▶'}</button>
+        <button class="btn-ico del" onclick="delSurvey(${s.id})">🗑️</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+function toggleSt(id) {
+  const surveys = DB.surveys;
+  const s = surveys.find(x=>x.id===id);
+  if (!s) return;
+  s.status = s.status==='active' ? 'closed' : 'active';
+  DB.surveys = surveys;
+  refreshAdmin();
+  // Refresh user list if user is logged in simultaneously (same tab share)
+  if (app.role==='user') renderUserList();
+  toast('📋 Statut mis à jour : '+s.status);
+}
+
+function delSurvey(id) {
+  if (!confirm('Supprimer ce sondage et toutes ses réponses ?')) return;
+  DB.surveys   = DB.surveys.filter(s=>s.id!==id);
+  DB.responses = DB.responses.filter(r=>r.surveyId!==id);
+  refreshAdmin();
+  toast('🗑️ Sondage supprimé.');
+}
+
+function openResults(id) {
+  admPage('results', document.getElementById('nav-results'));
+  setTimeout(()=>{ document.getElementById('resSel').value=id; renderResults(); }, 50);
+}
+
+// ─── CREATE SURVEY ────────────────────────────────────────────────────
+function addQ() {
+  app.qCount++;
+  const n = app.qCount;
+  const div = document.createElement('div');
+  div.className='q-item'; div.id='qi-'+n;
+  div.innerHTML=`
+    <div class="q-top">
+      <span class="q-num">Q${n}</span>
+      <input type="text" placeholder="Entrez votre question…"/>
+      <button class="btn-ico del" style="margin-top:2px" onclick="this.closest('.q-item').remove()">✕</button>
+    </div>
+    <div class="opts-grid" id="og-${n}">
+      <input class="opt-inp" placeholder="Option A"/>
+      <input class="opt-inp" placeholder="Option B"/>
+      <input class="opt-inp" placeholder="Option C"/>
+      <input class="opt-inp" placeholder="Option D"/>
+    </div>
+    <button class="btn-add-opt" onclick="addOpt(${n})">+ Option</button>
+  `;
+  document.getElementById('qList').appendChild(div);
+}
+
+function addOpt(n) {
+  const og = document.getElementById('og-'+n);
+  const inp = document.createElement('input');
+  inp.className='opt-inp';
+  inp.placeholder='Option '+(og.children.length+1);
+  og.appendChild(inp);
+}
+
+function saveSurvey() {
+  const title = document.getElementById('fTitle').value.trim();
+  if (!title) { toast('❌ Veuillez saisir un titre.'); return; }
+
+  const qItems = document.querySelectorAll('.q-item');
+  const questions=[];
+  qItems.forEach(item=>{
+    const qTxt = item.querySelector('.q-top input').value.trim();
+    if (!qTxt) return;
+    const opts = [...item.querySelectorAll('.opt-inp')].map(i=>i.value.trim()).filter(Boolean);
+    if (opts.length < 2) return;
+    questions.push({ text:qTxt, options:opts });
+  });
+
+  if (!questions.length) { toast('❌ Ajoutez au moins une question avec 2 options.'); return; }
+
+  const survey = {
+    id: Date.now(),
+    title,
+    desc: document.getElementById('fDesc').value.trim(),
+    status: document.getElementById('fStatus').value,
+    created: new Date().toISOString().split('T')[0],
+    questions,
+  };
+
+  const surveys = DB.surveys;
+  surveys.push(survey);
+  DB.surveys = surveys;
+  refreshAdmin();
+  resetCreate();
+  toast('✅ Sondage créé ! '+(survey.status==='active'?'Il est maintenant visible aux utilisateurs.':'Statut : brouillon.'));
+  admPage('list', document.getElementById('nav-list'));
+}
+
+function resetCreate() {
+  document.getElementById('fTitle').value='';
+  document.getElementById('fDesc').value='';
+  document.getElementById('fStatus').value='draft';
+  document.getElementById('qList').innerHTML='';
+  app.qCount=0;
+}
+
+// ─── RESULTS (admin) ─────────────────────────────────────────────────
+function populateResSel() {
+  const sel = document.getElementById('resSel');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">— Choisir un sondage —</option>' +
+    DB.surveys.map(s=>`<option value="${s.id}">${s.title}</option>`).join('');
+  if (cur) sel.value=cur;
+}
+
+function renderResults() {
+  const id = parseInt(document.getElementById('resSel').value);
+  const cont = document.getElementById('resContainer');
+  if (!id) { cont.innerHTML='<p style="color:var(--muted);font-size:.9rem">Sélectionnez un sondage.</p>'; return; }
+  const survey = DB.surveys.find(s=>s.id===id);
+  if (!survey) return;
+  const reps = DB.responses.filter(r=>r.surveyId===id);
+  const FILLS=['','g','o','b'];
+  cont.innerHTML=`<p style="margin-bottom:1rem;color:var(--muted);font-size:.875rem">${reps.length} réponse(s) au total</p>`+
+    survey.questions.map((q,qi)=>{
+      const counts = q.options.map((_,oi)=>reps.filter(r=>r.answers[qi]===oi).length);
+      const total = counts.reduce((a,b)=>a+b,0)||1;
+      return `<div class="rcard">
+        <div class="rq-title">Q${qi+1}. ${q.text}</div>
+        ${q.options.map((opt,oi)=>{
+          const pct=Math.round(counts[oi]/total*100);
+          return `<div class="rbar-row">
+            <div class="rbar-lbl"><span>${opt}</span><span class="pct">${pct}% <small style="color:var(--muted)">(${counts[oi]})</small></span></div>
+            <div class="rbar"><div class="rbar-fill ${FILLS[oi]||''}" style="width:${pct}%"></div></div>
+          </div>`;
+        }).join('')}
+        <p style="font-size:.78rem;color:var(--muted);margin-top:.5rem">${reps.length} répondants</p>
+      </div>`;
+    }).join('');
+}
+
+// ─── PARTICIPANTS ─────────────────────────────────────────────────────
+function renderParts(filter='') {
+  const tbody = document.getElementById('partsTbl');
+  const filtered = DB.responses.filter(r=>r.email.toLowerCase().includes(filter.toLowerCase()));
+  if (!filtered.length) { tbody.innerHTML='<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:2rem">Aucun participant.</td></tr>'; return; }
+  tbody.innerHTML = filtered.map(r=>{
+    const s = DB.surveys.find(sv=>sv.id===r.surveyId);
+    return `<tr>
+      <td>${r.email}</td>
+      <td>${s?s.title:'—'}</td>
+      <td>${r.date}</td>
+      <td><span class="badge badge-active">Complété</span></td>
+    </tr>`;
+  }).join('');
+}
+function filterParts(v){ renderParts(v); }
+
+// ─── EXPORT ───────────────────────────────────────────────────────────
+function exportCSV() {
+  const rows=[['Email','Sondage','Date']];
+  DB.responses.forEach(r=>{
+    const s=DB.surveys.find(sv=>sv.id===r.surveyId);
+    rows.push([r.email, s?s.title:r.surveyId, r.date]);
+  });
+  const csv=rows.map(r=>r.join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='sondage-export.csv'; a.click();
+  toast('⬇ Export CSV téléchargé !');
+}
+
+// ─── AZURE TEST ───────────────────────────────────────────────────────
+function testConn() {
+  const srv=document.getElementById('sqlSrv').value;
+  if (!srv) { toast('❌ Entrez l\'adresse du serveur SQL.'); return; }
+  toast('🔗 Test connexion Azure SQL…');
+  setTimeout(()=>toast('✅ Connexion Azure SQL réussie !'), 1800);
+  const furl=document.getElementById('funcURL').value;
+  if (furl) localStorage.setItem('sp_funcURL', furl);
+}
+
+// ─── USER VIEW ────────────────────────────────────────────────────────
+function renderUserList() {
+  const container = document.getElementById('scardList');
+  const active = DB.surveys.filter(s=>s.status==='active');
+
+  if (!active.length) {
+    container.innerHTML=`<div class="empty-state">
+      <div class="es-icon">📭</div>
+      <p>Aucun sondage actif pour le moment.<br>Revenez plus tard !</p>
+    </div>`;
+    return;
+  }
+
+  const done = DB.responses.filter(r=>r.email===app.email).map(r=>r.surveyId);
+  container.innerHTML = active.map(s=>{
+    const isDone = done.includes(s.id);
+    const reps = DB.responses.filter(r=>r.surveyId===s.id).length;
+    return `<div class="scard ${isDone?'done':''}" onclick="${isDone?'':'startSurvey('+s.id+')'}">
+      <div class="scard-info">
+        <h3>${s.title}</h3>
+        <p>${s.desc||'Répondez à ce sondage'}</p>
+        <div class="scard-meta">
+          <span class="meta-chip">❓ ${s.questions.length} question${s.questions.length>1?'s':''}</span>
+          <span class="meta-chip">👥 ${reps} réponse${reps>1?'s':''}</span>
+        </div>
+      </div>
+      <button class="btn-go ${isDone?'done-btn':''}" onclick="${isDone?'':event+';startSurvey('+s.id+')'}">
+        ${isDone?'✓ Complété':'Répondre →'}
+      </button>
+    </div>`;
+  }).join('');
+}
+
+function startSurvey(id) {
+  const survey = DB.surveys.find(s=>s.id===id);
+  if (!survey) return;
+
+  app.currentSurvey = survey;
+  app.currentQ      = 0;
+  app.answers       = new Array(survey.questions.length).fill(null);
+
+  document.getElementById('svTitle').textContent = survey.title;
+  document.getElementById('svDesc').textContent  = survey.desc||'';
+
+  // Build question cards
+  const wrap = document.getElementById('qcardsWrap');
+  const LTRS = ['A','B','C','D','E','F','G','H'];
+  wrap.innerHTML = survey.questions.map((q,qi)=>`
+    <div class="qcard ${qi===0?'on':''}" id="qc-${qi}">
+      <div class="qnum">Question ${qi+1} sur ${survey.questions.length}</div>
+      <div class="qtext">${q.text}</div>
+      <div class="opts-list">
+        ${q.options.map((opt,oi)=>`
+          <button class="opt-btn" id="ob-${qi}-${oi}" onclick="pickAnswer(${qi},${oi})">
+            <div class="opt-letter">${LTRS[oi]||oi+1}</div>
+            <span>${opt}</span>
+          </button>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+
+  updateProg();
+  document.getElementById('usrList').style.display='none';
+  document.getElementById('svWrap').style.display='block';
+  document.getElementById('resWrap').style.display='none';
+}
+
+function pickAnswer(qi, oi) {
+  app.answers[qi]=oi;
+  document.querySelectorAll(`[id^="ob-${qi}-"]`).forEach(b=>b.classList.remove('sel'));
+  document.getElementById(`ob-${qi}-${oi}`).classList.add('sel');
+  updateProg();
+}
+
+function updateProg() {
+  const total = app.currentSurvey.questions.length;
+  const pct   = Math.round((app.currentQ+1)/total*100);
+  document.getElementById('progTxt').textContent  = `Q ${app.currentQ+1} / ${total}`;
+  document.getElementById('progPct').textContent  = pct+'%';
+  document.getElementById('progFill').style.width = pct+'%';
+  const isLast = app.currentQ===total-1;
+  const btn    = document.getElementById('btnNext');
+  btn.textContent = isLast ? 'Soumettre ✓' : 'Suivant →';
+  btn.className   = 'btn-next-nav'+(isLast?' submit':'');
+  btn.onclick     = isLast ? submitSurvey : nextQ;
+  document.getElementById('btnPrev').style.visibility = app.currentQ===0?'hidden':'visible';
+}
+
+function nextQ() {
+  if (app.answers[app.currentQ]===null) { toast('⚠️ Veuillez choisir une réponse.'); return; }
+  const total=app.currentSurvey.questions.length;
+  if (app.currentQ<total-1) {
+    document.getElementById('qc-'+app.currentQ).classList.remove('on');
+    app.currentQ++;
+    document.getElementById('qc-'+app.currentQ).classList.add('on');
+    updateProg();
+  }
+}
+
+function prevQ() {
+  if (app.currentQ>0) {
+    document.getElementById('qc-'+app.currentQ).classList.remove('on');
+    app.currentQ--;
+    document.getElementById('qc-'+app.currentQ).classList.add('on');
+    updateProg();
+  }
+}
+
+function submitSurvey() {
+  if (app.answers[app.currentQ]===null) { toast('⚠️ Répondez à cette question.'); return; }
+  if (app.answers.some(a=>a===null)) { toast('⚠️ Répondez à toutes les questions.'); return; }
+
+  const response = {
+    email:     app.email,
+    surveyId:  app.currentSurvey.id,
+    date:      new Date().toISOString().split('T')[0],
+    answers:   [...app.answers],
+  };
+
+  const responses = DB.responses;
+  responses.push(response);
+  DB.responses = responses;
+
+  // Call Azure Function if configured
+  const furl = localStorage.getItem('sp_funcURL');
+  if (furl) {
+    fetch(furl, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ surveyId:response.surveyId, email:response.email, answers:response.answers })
+    }).catch(()=>{});
+  }
+
+  showUserResults();
+}
+
+function showUserResults() {
+  const survey = app.currentSurvey;
+  const allReps = DB.responses.filter(r=>r.surveyId===survey.id);
+  const mine    = app.answers;
+  const FILLS   = ['','g','o','b'];
+
+  document.getElementById('usrResContainer').innerHTML = survey.questions.map((q,qi)=>{
+    const counts = q.options.map((_,oi)=>allReps.filter(r=>r.answers[qi]===oi).length);
+    const total  = counts.reduce((a,b)=>a+b,0)||1;
+    return `<div class="rcard">
+      <div class="rq-title">Q${qi+1}. ${q.text}</div>
+      ${q.options.map((opt,oi)=>{
+        const pct=Math.round(counts[oi]/total*100);
+        const isM=mine[qi]===oi;
+        return `<div class="rbar-row">
+          <div class="rbar-lbl">
+            <span>${isM?'<strong>✓ ':''}${opt}${isM?'</strong>':''}</span>
+            <span class="pct">${pct}%</span>
+          </div>
+          <div class="rbar"><div class="rbar-fill ${isM?'g':FILLS[oi]||''}" style="width:${pct}%"></div></div>
+        </div>`;
+      }).join('')}
+      <p style="font-size:.78rem;color:var(--muted);margin-top:.5rem">${allReps.length} répondants</p>
+    </div>`;
+  }).join('');
+
+  document.getElementById('svWrap').style.display='none';
+  document.getElementById('resWrap').style.display='block';
+}
+
+function backToList() {
+  app.currentSurvey=null; app.currentQ=0; app.answers=[];
+  document.getElementById('usrList').style.display='block';
+  document.getElementById('resWrap').style.display='none';
+  renderUserList();
+}
+
+// ─── TOAST ────────────────────────────────────────────────────────────
+function toast(msg) {
+  const el=document.getElementById('toastEl');
+  el.textContent=msg; el.classList.add('on');
+  clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove('on'),3000);
+}
+</script>
+</body>
+</html>
